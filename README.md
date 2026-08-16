@@ -189,18 +189,51 @@ information rather than the newest.
 `pipe` is RFC 6675's estimate of what is really still in the network. Counting
 SACKed data as in flight under-sends for the rest of the recovery.
 
+## Nagle and the delayed ACK
+
+`tcp.pacing` has both, in one namespace, because their interaction is the reason
+either is interesting.
+
+Each alone is reasonable. Nagle stops a sender turning one keystroke into one
+41-byte packet. The delayed ACK stops a receiver spending a packet on every
+acknowledgement.
+
+**Together they deadlock.** A sender writes data ending in a partial segment;
+Nagle holds it because earlier data is unacknowledged. The receiver has that
+earlier data and is waiting — for a second full segment that will never come,
+because the sender is holding it. Nothing is lost, nothing errors, and the
+transfer stalls for the receiver's whole delay on every request that ends in a
+partial segment.
+
+`deadlock?` and `stall-ms` name that state so it can be asserted against rather
+than discovered in a latency graph. **This namespace will not resolve it by
+quietly disabling one side** — which one to disable belongs to the application
+(a request/response protocol wants Nagle off; a bulk transfer does not), and a
+library choosing silently is how a setting becomes impossible to find later.
+
+Two details loss recovery depends on:
+
+- **An out-of-order segment is acknowledged immediately.** Those duplicate ACKs
+  are what `tcp.congestion`'s fast retransmit counts; delaying them delays the
+  third duplicate, and so the retransmission, by the whole timer — on exactly
+  the path that has just lost a segment. A test drives three of them into the
+  controller to show the retransmit fires now rather than a timer later.
+- **The delay timer runs from the first unacknowledged segment**, not the most
+  recent. Restarting it on each arrival lets a steady trickle of small segments
+  defer the ACK indefinitely.
+
 ## What this is not
 
-No Nagle, no delayed-ACK logic, and no PMTU discovery. Named as absent rather
-than half-built.
+No PMTU discovery. Named as absent rather than half-built.
 
 ## Status
 
-118 tests / 274 assertions. Shown to discriminate at every layer: replacing the
+135 tests / 305 assertions. Shown to discriminate at every layer: replacing the
 modular comparison with a raw `<` fails 8; removing the simultaneous-open arm
 fails 2; dropping Karn's refusal and flushing the queue on one timer fails 5;
 forgetting to deflate on leaving fast recovery and making a timeout as gentle as
 a fast retransmit fails 5; taking the newer bytes on overlap plus unbounding
 the out-of-order queue fails 8; scaling the SYN, swapping the two shifts and
-comparing timestamps raw fails 5; and treating a SACK as a promise plus always
-emitting four blocks fails 10.
+comparing timestamps raw fails 5; treating a SACK as a promise plus always
+emitting four blocks fails 10; and delaying the out-of-order ACK plus restarting
+the delay timer on each arrival fails 5.
