@@ -258,15 +258,40 @@ debug. It is the failure the ICMP method cannot see at all.
 Losing a probe is **not** a congestion signal: probes are deliberately oversized
 and their loss says something about size, not about queueing.
 
+## The scheduler
+
+`tcp.send` composes the rest into the question a sender actually has: is there
+something to put on the wire now, and what.
+
+**The binding limit is reported on every decision.** Three things cap how much
+may go — the congestion window (what the *network* will take), the receiver's
+advertised window (what the *peer* will take) and the path MTU (what one packet
+may be) — and which one was smallest is the diagnostic. "This connection is
+slow" is unanswerable without it; `why-slow` turns a decision into `:the-network`
+or `:the-peer` or `:held-for-coalescing`, which is the difference between
+looking at the network and looking at the application on the other end.
+
+**Flight size is un-SACKed bytes, not queue bytes.** SACKed data has left the
+network — the receiver said so — and counting it as in flight holds the sender
+back for the rest of the recovery by exactly the amount the receiver already
+has. This is a throughput bug no single-namespace test can catch, because
+`tcp.sack` and `tcp.congestion` are each individually correct; it exists only in
+the composition, which is why this namespace has tests of its own.
+
+Precedence: a timed-out segment outranks everything, including a collapsed
+congestion window (RFC 5681 permits one loss-recovery segment). Then, in
+recovery, the SACK-named holes go before anything new (RFC 6675). Then new data,
+subject to Nagle.
+
 ## What this is not
 
-The transmission scheduler that would tie these namespaces together — deciding
-what to send, when, from a send buffer — is not here. Each piece decides its own
-question and the composition is the caller's.
+A socket. Nothing here reads from a send buffer, writes to a wire, or holds a
+timer — every namespace decides, and the mechanism is the caller's. That
+boundary is deliberate: this has to run where there is no socket API at all.
 
 ## Status
 
-152 tests / 343 assertions. Shown to discriminate at every layer: replacing the
+169 tests / 386 assertions across ten namespaces. Shown to discriminate at every layer: replacing the
 modular comparison with a raw `<` fails 8; removing the simultaneous-open arm
 fails 2; dropping Karn's refusal and flushing the queue on one timer fails 5;
 forgetting to deflate on leaving fast recovery and making a timeout as gentle as
@@ -274,5 +299,6 @@ a fast retransmit fails 5; taking the newer bytes on overlap plus unbounding
 the out-of-order queue fails 8; scaling the SYN, swapping the two shifts and
 comparing timestamps raw fails 5; treating a SACK as a promise plus always
 emitting four blocks fails 10; delaying the out-of-order ACK plus restarting
-the delay timer on each arrival fails 5; and believing unvalidated ICMP,
-clamping a below-floor claim and removing the black-hole fallback fails 5.
+the delay timer on each arrival fails 5; believing unvalidated ICMP,
+clamping a below-floor claim and removing the black-hole fallback fails 5; and
+counting SACKed data as in flight plus sending new data before the holes fails 3.
