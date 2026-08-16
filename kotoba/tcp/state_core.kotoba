@@ -28,6 +28,7 @@
 ;; the boundary is the compiler's, not this file's.
 
 (ns tcp.state-core
+  (:require [tcp.seq-core :as s])
   (:export [segment-decision next-rcv-nxt
             decision-state decision-action decision-drop]))
 
@@ -173,14 +174,5 @@
                   (on-synchronised state flags acceptable fin-acked))))))
 
 ;; A FIN consumes one sequence number beyond the data it carries.
-;;
-;; The wrap is inlined rather than calling `tcp.seq-core/add-seq`, which is
-;; where it belongs. `compiler/compile-source` -- the entry point every parity
-;; harness in this workspace uses -- rejects a `:require` clause outright
-;; ("only a bounded :export vector is admitted in namespace clauses"), so a
-;; module with a dependency cannot be driven from a JVM test at all without
-;; going through the project-linking API. Duplicating four characters of
-;; masking was the cheaper of the two, and it is duplication: if the wrap ever
-;; stops being bit-and, both copies have to move.
 (defn next-rcv-nxt [seg-seq :i64 seg-len :i64 fin :bool] :i64
-  (bit-and (+ seg-seq (if fin (+ seg-len 1) seg-len)) 4294967295))
+  (s/add-seq seg-seq (if fin (+ seg-len 1) seg-len)))
