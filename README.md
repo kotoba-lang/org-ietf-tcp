@@ -80,15 +80,43 @@ one sample that is entitled to be measured.
 turns a single loss into a burst the network already asked the sender not to
 send.
 
+## Congestion control
+
+`tcp.congestion` is RFC 5681: slow start, congestion avoidance, fast retransmit
+and fast recovery.
+
+The window is a **guess about a path nobody can see**. A sender cannot observe
+the bottleneck; it observes that segments arrived and that some did not, and
+5681 turns those two observations into a number.
+
+- **Three duplicate ACKs is a heuristic, not a proof.** A duplicate means the
+  receiver got something out of order, which happens on loss *and* on
+  reordering. Three is where 5681 bets that loss is likelier — a path that
+  reorders heavily will make this sender halve for no reason. Said here so a
+  reader does not assume the number was derived.
+- **A timeout is harsher than duplicates because the evidence is.** Duplicates
+  mean the receiver is still hearing something; a timeout means it is not. So a
+  timeout drops cwnd to one segment while fast recovery only halves it.
+- **Fast recovery inflates, and the inflation must be undone.** Leaving it
+  deflates cwnd back to ssthresh — a sender that forgets keeps a window it never
+  earned. That has its own test.
+- The initial window follows 5681 (`min(4·MSS, max(2·MSS, 4380))`), not RFC
+  6928's 10·MSS. The larger burst is available as `initial-window-10` because
+  how much an unmeasured path can absorb belongs to whoever deploys this.
+
+`may-send` knows only what the **network** will take. The receiver's advertised
+window is the other limit and stays with the caller.
+
 ## What this is not
 
-**Not a transmission stack.** No congestion window, no fast retransmit, no SACK,
-no Nagle, no window scaling, no out-of-order reassembly. A sender built on this
-retransmits correctly and does not know when to slow down. Named as absent
-rather than half-built.
+No SACK, no Nagle, no window scaling, no timestamps, no out-of-order reassembly,
+no delayed-ACK logic, and no PMTU discovery. Named as absent rather than
+half-built.
 
 ## Status
 
-51 tests / 127 assertions. Shown to discriminate: replacing the modular
-comparison with a raw `<` fails 8, removing the simultaneous-open arm fails 2,
-and dropping Karn's refusal plus flushing the whole queue on one timer fails 5.
+68 tests / 169 assertions. Shown to discriminate at every layer: replacing the
+modular comparison with a raw `<` fails 8; removing the simultaneous-open arm
+fails 2; dropping Karn's refusal and flushing the queue on one timer fails 5;
+forgetting to deflate on leaving fast recovery and making a timeout as gentle as
+a fast retransmit fails 5.
