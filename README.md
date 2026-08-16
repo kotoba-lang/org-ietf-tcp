@@ -222,18 +222,57 @@ Two details loss recovery depends on:
   recent. Restarting it on each arrival lets a steady trickle of small segments
   defer the ACK indefinitely.
 
+## Path MTU discovery
+
+`tcp.pmtu` is RFC 8899 (PLPMTUD), not RFC 1191.
+
+The classic method sends large packets with don't-fragment set and waits for a
+router to reply with ICMP naming a smaller size. **Firewalls filter ICMP.** When
+they do, the oversized packets are dropped and nothing comes back — a PMTU black
+hole. The connection completes its handshake perfectly, because SYNs are small,
+and hangs the moment it sends a full-sized segment. "Connects fine, stalls on the
+first real transfer" is that failure, and it is invisible to every check that
+only asks whether the connection came up.
+
+So the search is driven by the transport: probe upward, and an **acknowledged
+probe is the confirmation**. A filtered network is no longer silent; it simply
+fails to confirm, which is a signal.
+
+ICMP is still used, as a hint that narrows the search, never as an authority:
+
+- A message that does not quote a packet we sent is refused. Without that check,
+  anyone able to send an ICMP packet can shrink this connection to the floor and
+  leave it there.
+- A claim below `min-mtu` is **refused, not clamped** — a path that cannot carry
+  1200 bytes is not one this transport can use, and clamping hides that behind
+  tiny segments.
+- A claim at or below a size a probe already carried is refused. A changed path
+  and a forgery are indistinguishable from here, so the evidence this connection
+  gathered itself wins, and the black-hole detector catches a genuinely changed
+  path using timeouts rather than anyone's assertion.
+
+**Repeated timeouts at a size that used to work fall back to base.** That turns
+a hung connection into a slow one, and a slow connection is one somebody can
+debug. It is the failure the ICMP method cannot see at all.
+
+Losing a probe is **not** a congestion signal: probes are deliberately oversized
+and their loss says something about size, not about queueing.
+
 ## What this is not
 
-No PMTU discovery. Named as absent rather than half-built.
+The transmission scheduler that would tie these namespaces together — deciding
+what to send, when, from a send buffer — is not here. Each piece decides its own
+question and the composition is the caller's.
 
 ## Status
 
-135 tests / 305 assertions. Shown to discriminate at every layer: replacing the
+152 tests / 343 assertions. Shown to discriminate at every layer: replacing the
 modular comparison with a raw `<` fails 8; removing the simultaneous-open arm
 fails 2; dropping Karn's refusal and flushing the queue on one timer fails 5;
 forgetting to deflate on leaving fast recovery and making a timeout as gentle as
 a fast retransmit fails 5; taking the newer bytes on overlap plus unbounding
 the out-of-order queue fails 8; scaling the SYN, swapping the two shifts and
 comparing timestamps raw fails 5; treating a SACK as a promise plus always
-emitting four blocks fails 10; and delaying the out-of-order ACK plus restarting
-the delay timer on each arrival fails 5.
+emitting four blocks fails 10; delaying the out-of-order ACK plus restarting
+the delay timer on each arrival fails 5; and believing unvalidated ICMP,
+clamping a below-floor claim and removing the black-hole fallback fails 5.
