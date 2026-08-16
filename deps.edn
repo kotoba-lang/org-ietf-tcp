@@ -1,0 +1,11 @@
+{:paths ["src"]
+ ;; Zero runtime dependencies. Sequence arithmetic and the state machine are
+ ;; portable .cljc with no sockets, no buffers and no clock -- the caller passes
+ ;; :now-ms, which is what makes TIME-WAIT testable without waiting out 2*MSL.
+ :deps {}
+ :aliases
+ {:test {:extra-paths ["test"]
+         :extra-deps {io.github.cognitect-labs/test-runner
+                      {:git/tag "v0.5.1" :git/sha "dfb30dd"}}
+         :main-opts ["-m" "cognitect.test-runner"]
+         :exec-fn cognitect.test-runner.api/test}}}
