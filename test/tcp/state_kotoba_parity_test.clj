@@ -24,17 +24,31 @@
 (def ^:private source-file
   (io/file (System/getProperty "user.dir") "kotoba" "tcp" "state_core.kotoba"))
 
+(def ^:private dep-file
+  (io/file (System/getProperty "user.dir") "kotoba" "tcp" "seq_core.kotoba"))
+
 (defn- source-available?
   "Fails rather than skips. A `(when (.exists f) ...)` guard around the
   assertions reports green on a checkout without the object, which is a skip
   wearing a pass."
   []
-  (let [present? (.exists source-file)]
-    (is present? (str "kotoba object not found at " source-file))
+  (let [present? (and (.exists source-file) (.exists dep-file))]
+    (is present? (str "kotoba objects not found: " source-file " / " dep-file))
     present?))
 
+;; `compile-project` rather than `compile-source`, because this module has a
+;; dependency and `compile-source` refuses a `:require` clause outright ("only
+;; a bounded :export vector is admitted in namespace clauses"). It takes a
+;; closed namespace -> source map with no filesystem walk and no source path,
+;; which is what a test wants anyway.
+;;
+;; This object briefly inlined its own wrap to stay single-module, on the
+;; belief that a JVM harness could not drive a dependency at all. It can.
 (def ^:private kir
-  (delay (:kir (compiler/compile-source (slurp source-file) :wasm32-kotoba-v1 {}))))
+  (delay (:kir (compiler/compile-project
+                {'tcp.seq-core (slurp dep-file)
+                 'tcp.state-core (slurp source-file)}
+                'tcp.state-core :wasm32-kotoba-v1 {}))))
 
 (defn- decide [state flags acceptable? ack-ok? fin-acked?]
   (let [d (ir/execute @kir 'segment-decision
