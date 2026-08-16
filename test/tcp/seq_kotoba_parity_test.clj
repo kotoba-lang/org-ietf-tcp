@@ -108,6 +108,16 @@
       (is (= (s/between? x lo hi) (call? 'between? x lo hi))
           (str "between? " x " " lo " " hi)))))
 
+(deftest segment-end-agrees
+  (when (source-available?)
+    (doseq [sq (take 14 points), len [0 1 1460], syn? [false true], fin? [false true]]
+      (is (= (s/segment-end {:seq sq :len len :syn? syn? :fin? fin?})
+             (call 'segment-end sq len syn? fin?))
+          (str "segment-end " sq " len " len " syn " syn? " fin " fin?
+               " -- SYN and FIN each occupy a sequence number of their own. "
+               "tcp.sack and tcp.retransmit each carried a private, textually "
+               "identical copy of this until it moved here.")))))
+
 (deftest acceptability-agrees
   (when (source-available?)
     (doseq [seg-seq (take 14 points)

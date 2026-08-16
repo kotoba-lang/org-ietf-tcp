@@ -102,8 +102,7 @@
 
 ;; ── sender side ───────────────────────────────────────────────────────────
 
-(defn- entry-end [e]
-  (s/+seq (:seq e) (+ (:len e 0) (if (:syn? e) 1 0) (if (:fin? e) 1 0))))
+(def ^:private entry-end s/segment-end)
 
 (defn- covered? [e [lo hi]]
   (and (s/geq? (:seq e) lo) (s/leq? (entry-end e) hi)))

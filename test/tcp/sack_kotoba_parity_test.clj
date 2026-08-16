@@ -22,6 +22,7 @@
             [clojure.test :refer [deftest is]]
             [kotoba.compiler.core :as compiler]
             [kotoba.kir :as ir]
+            [tcp.seq]
             [tcp.sack :as sack]))
 
 (def ^:private source-file
@@ -49,11 +50,7 @@
 ;; `covered?` and `entry-end` are private in tcp.sack -- they are the arithmetic
 ;; the public functions are built from, and the object exists to hold exactly
 ;; that arithmetic, so the test reaches them by var rather than restating them.
-(def ^:private cljc-entry-end (var-get #'tcp.sack/entry-end))
 (def ^:private cljc-covered? (var-get #'tcp.sack/covered?))
-
-(def ^:private seqs
-  [0 1 1000 4294967295 4294967294 2147483647 2147483648 2147483649])
 
 (deftest kotoba-objects-are-present
   (source-available?))
@@ -73,16 +70,9 @@
              (call 'sack-permitted? ours theirs))
           (str "permitted? ours " ours " theirs " theirs)))))
 
-(deftest entry-end-agrees
-  (when (source-available?)
-    (doseq [s seqs
-            len [0 1 1460]
-            syn? [false true]
-            fin? [false true]]
-      (is (= (cljc-entry-end {:seq s :len len :syn? syn? :fin? fin?})
-             (call 'entry-end s len syn? fin?))
-          (str "entry-end seq " s " len " len " syn " syn? " fin " fin?
-               " -- SYN and FIN each consume one beyond the payload")))))
+;; `entry-end` moved into tcp.seq-core as `segment-end` and is checked by the
+;; seq suite. Only the project ROOT's exports are reachable through the KIR,
+;; which is right -- a dependency's surface is not this module's ABI.
 
 (deftest covered-agrees
   (when (source-available?)
@@ -91,7 +81,7 @@
             syn? [false true]
             fin? [false true]
             :let [e {:seq s :len len :syn? syn? :fin? fin?}
-                  end (cljc-entry-end e)]
+                  end (tcp.seq/segment-end e)]
             ;; block edges exactly at, one inside and one outside the entry in
             ;; both directions: partial cover must not count as cover.
             lo [(dec s) s (inc s)]

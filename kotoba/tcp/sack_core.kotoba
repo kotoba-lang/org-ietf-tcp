@@ -6,8 +6,12 @@
 ;; list, coalescing it and walking the retransmission queue stay in .cljc --
 ;; those are collection work, and the decisions are the same either way.
 ;;
-;; This module has a real dependency: coverage is a sequence-space comparison,
-;; so it calls `tcp.seq-core` rather than restating the wrap. Driving it from a
+;; This module has a real dependency: coverage is a sequence-space comparison
+;; and an entry's end is `tcp.seq-core/segment-end`, so it calls that rather
+;; than restating either. The .cljc carried two private copies of the end
+;; calculation, in `tcp.sack` and `tcp.retransmit`, textually identical -- which
+;; is the good case; the bad one is where they stop being. Both now call
+;; `tcp.seq/segment-end`. Driving it from a
 ;; JVM test needs `compile-project`, not `compile-source` -- the latter refuses
 ;; a `:require` clause outright.
 ;;
@@ -15,7 +19,7 @@
 
 (ns tcp.sack-core
   (:require [tcp.seq-core :as s])
-  (:export [max-blocks entry-end covered? sack-permitted?]))
+  (:export [max-blocks covered? sack-permitted?]))
 
 (def block-bytes 8)
 (def option-header-bytes 2)
@@ -29,13 +33,6 @@
   (quot (- (- option-space-bytes option-header-bytes)
            (if timestamps? timestamp-option-bytes 0))
         block-bytes))
-
-;; SYN and FIN each consume a sequence number beyond the payload, so an entry
-;; carrying either ends one past where its length alone would put it. A sender
-;; that forgets this leaves the handshake byte outside every block it computes
-;; and retransmits a segment the receiver already acknowledged.
-(defn entry-end [seg-seq :i64 len :i64 syn? :bool fin? :bool] :i64
-  (s/add-seq seg-seq (+ len (+ (if syn? 1 0) (if fin? 1 0)))))
 
 ;; A block covers an entry only if it contains the whole entry. Partial cover
 ;; is not cover: the uncovered bytes still have to be sent, and marking the

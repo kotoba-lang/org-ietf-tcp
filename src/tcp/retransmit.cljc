@@ -33,13 +33,7 @@
 
 (defn queue [] {:tcp.rtx/entries []})
 
-(defn- entry-end
-  "The sequence number one past this entry's last byte. SYN and FIN each occupy
-  one sequence number, which is why they are counted here rather than in `len`."
-  [e]
-  (s/+seq (:seq e) (+ (:len e 0)
-                      (if (:syn? e) 1 0)
-                      (if (:fin? e) 1 0))))
+(def ^:private entry-end s/segment-end)
 
 (defn push
   "Record a segment as sent at `now-ms`. Entries stay in the order they were
