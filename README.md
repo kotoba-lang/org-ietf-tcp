@@ -107,16 +107,39 @@ the bottleneck; it observes that segments arrived and that some did not, and
 `may-send` knows only what the **network** will take. The receiver's advertised
 window is the other limit and stays with the caller.
 
+## Reassembly
+
+`tcp.reassemble` holds in-window segments that arrived out of order and hands up
+the prefix that has become contiguous. A receiver that discards everything after
+a gap turns one lost segment into a whole window of retransmissions — and the
+congestion controller reads those as a much worse path than the one it is on.
+
+**Overlap has a policy and the policy is first-data-wins.** Segments can overlap
+and the overlapping bytes can *disagree*. Two receivers resolving that
+differently see two different streams from the same packets, which is the whole
+family of overlap-based IDS evasions. This keeps the bytes it already has and
+trims the arrival down to what is genuinely new; taking the newer bytes would
+let anyone able to inject a later packet rewrite what the peer already sent.
+
+**The queue is bounded and overrun is refused whole.** An unbounded out-of-order
+queue is a memory-exhaustion primitive. The bound is charged against what stays
+*held* — in-order data is delivered and never occupies the queue — and a
+segment that would exceed it is refused entirely, because a trimmed fragment can
+never be completed.
+
+`gaps` reports the holes as `[start end)` pairs — what a SACK option would say
+if this stack had one.
+
 ## What this is not
 
-No SACK, no Nagle, no window scaling, no timestamps, no out-of-order reassembly,
-no delayed-ACK logic, and no PMTU discovery. Named as absent rather than
-half-built.
+No SACK, no Nagle, no window scaling, no timestamps, no delayed-ACK logic, and
+no PMTU discovery. Named as absent rather than half-built.
 
 ## Status
 
-68 tests / 169 assertions. Shown to discriminate at every layer: replacing the
+83 tests / 203 assertions. Shown to discriminate at every layer: replacing the
 modular comparison with a raw `<` fails 8; removing the simultaneous-open arm
 fails 2; dropping Karn's refusal and flushing the queue on one timer fails 5;
 forgetting to deflate on leaving fast recovery and making a timeout as gentle as
-a fast retransmit fails 5.
+a fast retransmit fails 5; and taking the newer bytes on overlap plus unbounding
+the out-of-order queue fails 8.
