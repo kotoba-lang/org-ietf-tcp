@@ -55,6 +55,21 @@
   [a b]
   (let [d (-seq b a)] (not= d half)))
 
+(defn segment-end
+  "The sequence number one past a segment's last byte.
+
+  SYN and FIN each occupy one sequence number of their own, which is why they
+  are counted here rather than folded into `len`. A sender that omits them
+  computes an end one short, and every range comparison built on it -- what a
+  SACK block covers, what a cumulative ACK retires -- is wrong by exactly the
+  handshake byte.
+
+  `tcp.sack` and `tcp.retransmit` each carried a private copy of this. They
+  were textually identical, which is the good case; the bad one is where they
+  stop being."
+  [{:keys [seq len syn? fin?] :or {len 0}}]
+  (+seq seq (+ len (if syn? 1 0) (if fin? 1 0))))
+
 ;; ── acceptability (RFC 9293 §3.10.7.4) ─────────────────────────────────────
 
 (defn acceptable?

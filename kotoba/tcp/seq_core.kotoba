@@ -23,7 +23,8 @@
 ;; The parity test in test/tcp/seq_kotoba_parity_test.clj runs both.
 
 (ns tcp.seq-core
-  (:export [wrap add-seq sub-seq lt? leq? gt? geq? between? ordered? acceptable?]))
+  (:export [wrap add-seq sub-seq lt? leq? gt? geq? between? ordered? acceptable?
+            segment-end]))
 
 (def modulus-mask 4294967295)                   ; 2^32 - 1
 (def half 2147483648)                           ; 2^31
@@ -56,6 +57,14 @@
 ;; False for the 2^31 antipode, where TCP's comparison is undefined.
 (defn ordered? [a :i64 b :i64] :bool
   (not (= (sub-seq b a) half)))
+
+;; SYN and FIN each occupy one sequence number of their own, so they are counted
+;; here rather than folded into `len`. A sender that omits them computes an end
+;; one short, and every range comparison built on it -- what a SACK block
+;; covers, what a cumulative ACK retires -- is wrong by exactly the handshake
+;; byte.
+(defn segment-end [seg-seq :i64 len :i64 syn? :bool fin? :bool] :i64
+  (add-seq seg-seq (+ len (+ (if syn? 1 0) (if fin? 1 0)))))
 
 ;; RFC 9293 §3.10.7.4, the four cases kept apart.
 (defn acceptable? [seg-seq :i64 seg-len :i64 rcv-nxt :i64 rcv-wnd :i64] :bool
