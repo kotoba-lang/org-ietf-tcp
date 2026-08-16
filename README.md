@@ -59,8 +59,36 @@ Those are separable, and they are named here as absent rather than half-built.
 "this is a probe, not a stack". This namespace is the connection half of what
 would replace it; the transmission half is still unwritten.
 
+## Retransmission
+
+`tcp.rto` is RFC 6298's estimator and `tcp.retransmit` is the queue it drives.
+
+RTO covers the round trip **and its variance** — an estimator tracking only the
+mean retransmits on jitter, and every early retransmission is a segment the
+receiver already has plus a congestion signal the sender invented. RTTVAR is
+updated from the **old** SRTT, because updating SRTT first collapses the
+deviation term exactly when a jump makes the headroom necessary.
+
+**Karn's algorithm is enforced, not weighted.** An ACK for a retransmitted
+segment is ambiguous — it may acknowledge the original or the copy — so the
+sample is refused and reported as refused (`:karn`), which is not the same as no
+measurement having been taken. The flag lives on the queue entry, so one
+retransmitted segment and one clean segment in flight together still yield the
+one sample that is entitled to be measured.
+
+`due` returns only the **oldest** expired entry. Flushing the queue on one timer
+turns a single loss into a burst the network already asked the sender not to
+send.
+
+## What this is not
+
+**Not a transmission stack.** No congestion window, no fast retransmit, no SACK,
+no Nagle, no window scaling, no out-of-order reassembly. A sender built on this
+retransmits correctly and does not know when to slow down. Named as absent
+rather than half-built.
+
 ## Status
 
-26 tests / 69 assertions. Both halves shown to discriminate: replacing the
-modular comparison with a raw `<` fails 8 assertions, and removing the
-simultaneous-open arm fails 2.
+51 tests / 127 assertions. Shown to discriminate: replacing the modular
+comparison with a raw `<` fails 8, removing the simultaneous-open arm fails 2,
+and dropping Karn's refusal plus flushing the whole queue on one timer fails 5.
