@@ -161,17 +161,46 @@ that lifting is deliberate rather than a caller forgetting a flag.
 Only an in-sequence segment updates the recorded timestamp — recording from a
 reordered arrival lets an old segment raise the bar against the ones behind it.
 
+## Selective acknowledgement
+
+`tcp.sack` is RFC 2018. Without it a sender that loses one segment out of a
+window knows only that the cumulative ACK stopped moving — it cannot tell one
+loss from ten, so it resends from the hole onward and the receiver discards most
+of what arrives. Data the network carried twice, on a path the sender has just
+decided is congested.
+
+**SACK is advisory, and that is the whole subtlety.** §8 permits a receiver to
+renege: to report a range and later discard it. So `apply-blocks` *marks* queue
+entries and does not remove them — only the cumulative ACK retires anything,
+because only the cumulative ACK is a promise. A sender that frees SACKed data
+and then meets a reneging receiver has lost bytes it can never resend, and the
+connection stalls with nothing reporting why.
+
+**The option is small and how small depends on what else is on.** Four blocks
+fit in 40 bytes of option space; with timestamps also present, three. A stack
+that always emits four overruns the option space on every timestamped
+connection, so `max-blocks` takes the answer as an argument rather than assuming.
+
+**Order is not arbitrary.** §4 wants the block covering the most recently
+received segment first, with the previous report repeated behind it — so a lost
+ACK does not cost the sender its picture, and truncation drops the oldest
+information rather than the newest.
+
+`pipe` is RFC 6675's estimate of what is really still in the network. Counting
+SACKed data as in flight under-sends for the rest of the recovery.
+
 ## What this is not
 
-No SACK, no Nagle, no delayed-ACK logic, and no PMTU discovery. Named as absent
-rather than half-built.
+No Nagle, no delayed-ACK logic, and no PMTU discovery. Named as absent rather
+than half-built.
 
 ## Status
 
-103 tests / 249 assertions. Shown to discriminate at every layer: replacing the
+118 tests / 274 assertions. Shown to discriminate at every layer: replacing the
 modular comparison with a raw `<` fails 8; removing the simultaneous-open arm
 fails 2; dropping Karn's refusal and flushing the queue on one timer fails 5;
 forgetting to deflate on leaving fast recovery and making a timeout as gentle as
 a fast retransmit fails 5; taking the newer bytes on overlap plus unbounding
-the out-of-order queue fails 8; and scaling the SYN, swapping the two shifts and
-comparing timestamps raw fails 5.
+the out-of-order queue fails 8; scaling the SYN, swapping the two shifts and
+comparing timestamps raw fails 5; and treating a SACK as a promise plus always
+emitting four blocks fails 10.
