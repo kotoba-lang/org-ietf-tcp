@@ -10,8 +10,7 @@
   Getting this wrong does not fail loudly. A stack that compares raw integers
   works perfectly for the first four gigabytes of a connection and then starts
   discarding valid segments — which is why this is its own namespace with its
-  own tests rather than a couple of helpers inside the state machine."
-  (:require [clojure.set :as set]))
+  own tests rather than a couple of helpers inside the state machine.")
 
 (def modulus 4294967296)                       ; 2^32
 (def half 2147483648)                          ; 2^31
