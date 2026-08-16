@@ -130,16 +130,48 @@ never be completed.
 `gaps` reports the holes as `[start end)` pairs — what a SACK option would say
 if this stack had one.
 
+## Window scaling and timestamps
+
+`tcp.options` is RFC 7323. The header's window field is 16 bits, so without
+scaling a receiver cannot advertise more than 65535 bytes — which makes
+`tcp.congestion` an exercise on any path with a large bandwidth-delay product,
+because cwnd can grow all it likes and the advertised window is the binding
+limit.
+
+- **Both sides must offer it or neither uses it.** There is no partial adoption:
+  a scaled window read as unscaled is 2^N too small and the other way round is
+  2^N too large.
+- **A SYN's window is never scaled.** The option agreeing the scale travels in
+  that very segment. `apply-scale` takes `syn?` and refuses rather than trusting
+  the caller to remember — this is the classic bug in the option.
+- **The two shifts are not interchangeable.** We shift our own advertisements by
+  what we offered and read theirs by what they offered. Swapping them only shows
+  on asymmetric shifts, which is why it survives casual testing.
+- **`advertise` returns nil for a window it cannot express** rather than
+  truncating, because truncating advertises a smaller window and stalls
+  throughput with no error anywhere.
+
+Timestamps buy two things. **PAWS** rejects old duplicates that the sequence
+space could have wrapped past, comparing modularly because the timestamp clock
+wraps too. And **the echo lifts Karn's restriction**: `tcp.rto` refuses samples
+from retransmitted segments because the ACK is ambiguous about which copy it
+acknowledges, and the echo is not ambiguous. `rtt-sample` is a named function so
+that lifting is deliberate rather than a caller forgetting a flag.
+
+Only an in-sequence segment updates the recorded timestamp — recording from a
+reordered arrival lets an old segment raise the bar against the ones behind it.
+
 ## What this is not
 
-No SACK, no Nagle, no window scaling, no timestamps, no delayed-ACK logic, and
-no PMTU discovery. Named as absent rather than half-built.
+No SACK, no Nagle, no delayed-ACK logic, and no PMTU discovery. Named as absent
+rather than half-built.
 
 ## Status
 
-83 tests / 203 assertions. Shown to discriminate at every layer: replacing the
+103 tests / 249 assertions. Shown to discriminate at every layer: replacing the
 modular comparison with a raw `<` fails 8; removing the simultaneous-open arm
 fails 2; dropping Karn's refusal and flushing the queue on one timer fails 5;
 forgetting to deflate on leaving fast recovery and making a timeout as gentle as
-a fast retransmit fails 5; and taking the newer bytes on overlap plus unbounding
-the out-of-order queue fails 8.
+a fast retransmit fails 5; taking the newer bytes on overlap plus unbounding
+the out-of-order queue fails 8; and scaling the SYN, swapping the two shifts and
+comparing timestamps raw fails 5.
