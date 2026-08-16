@@ -33,7 +33,7 @@
             [tcp.seq :as s]))
 
 (def ^:private source-file
-  (io/file (System/getProperty "user.dir") "kotoba" "seq_core.kotoba"))
+  (io/file (System/getProperty "user.dir") "kotoba" "tcp" "seq_core.kotoba"))
 
 (defn- source-available?
   "Fails rather than skips when the object is missing.
