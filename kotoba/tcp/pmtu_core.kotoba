@@ -13,7 +13,7 @@
 ;; where the caller had no size to report it passes 0. Zero is not a probe size
 ;; and not an MTU, so it does not collide with a real answer.
 ;;
-;; Checked against `tcp.pmtu` in test/tcp/pmtu_kotoba_parity_test.clj.
+;; Checked against `tcp.pmtu` in test/tcp/pmtu_kotoba_parity_test.cljk.
 
 (ns tcp.pmtu-core
   (:export [midpoint next-probe search-done?

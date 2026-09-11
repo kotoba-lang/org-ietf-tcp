@@ -17,7 +17,7 @@
 ;; under-sends for the rest of the recovery. That mistake is invisible to
 ;; either namespace's own tests, because neither of them composes the two.
 ;;
-;; Checked against `tcp.send` in test/tcp/send_kotoba_parity_test.clj.
+;; Checked against `tcp.send` in test/tcp/send_kotoba_parity_test.cljk.
 
 (ns tcp.send-core
   (:require [tcp.pmtu-core :as pmtu]

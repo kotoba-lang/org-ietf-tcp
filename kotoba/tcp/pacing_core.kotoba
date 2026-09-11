@@ -13,7 +13,7 @@
 ;; No shifts, so `:bool` parameters are free (amu#611 refuses the pair, not
 ;; either half).
 ;;
-;; Checked against `tcp.pacing` in test/tcp/pacing_kotoba_parity_test.clj.
+;; Checked against `tcp.pacing` in test/tcp/pacing_kotoba_parity_test.cljk.
 
 (ns tcp.pacing-core
   (:export [clamped-delay may-send-reason may-send?

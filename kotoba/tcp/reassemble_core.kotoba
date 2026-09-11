@@ -16,7 +16,7 @@
 ;;   data is delivered and never occupies the queue, so charging arrivals
 ;;   refuses a large but perfectly ordered segment.
 ;;
-;; Checked against `tcp.reassemble` in test/tcp/reassemble_kotoba_parity_test.clj.
+;; Checked against `tcp.reassemble` in test/tcp/reassemble_kotoba_parity_test.cljk.
 
 (ns tcp.reassemble-core
   (:require [tcp.seq-core :as s])

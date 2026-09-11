@@ -17,7 +17,7 @@
 ;; to resolve, and inventing a sentinel would put a second spelling of the
 ;; default in a second place.
 ;;
-;; Checked against `tcp.congestion` in test/tcp/congestion_kotoba_parity_test.clj.
+;; Checked against `tcp.congestion` in test/tcp/congestion_kotoba_parity_test.cljk.
 
 (ns tcp.congestion-core
   (:export [phase on-ack-cwnd on-ack-state

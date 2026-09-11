@@ -15,7 +15,7 @@
 ;; JVM test needs `compile-project`, not `compile-source` -- the latter refuses
 ;; a `:require` clause outright.
 ;;
-;; Checked against `tcp.sack` in test/tcp/sack_kotoba_parity_test.clj.
+;; Checked against `tcp.sack` in test/tcp/sack_kotoba_parity_test.cljk.
 
 (ns tcp.sack-core
   (:require [tcp.seq-core :as s])
