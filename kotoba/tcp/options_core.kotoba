@@ -15,7 +15,7 @@
 ;; bounded table or a bounded loop, which is a different implementation rather
 ;; than a port, and no such thing is claimed here.
 ;;
-;; Checked against `tcp.options` in test/tcp/options_kotoba_parity_test.clj.
+;; Checked against `tcp.options` in test/tcp/options_kotoba_parity_test.cljk.
 
 (ns tcp.options-core
   (:require [tcp.seq-core :as s])

@@ -11,7 +11,7 @@
 ;; negotiation and PAWS on that -- but it was drawn here because of the
 ;; compiler, and it should be reconsidered when #611 is fixed.
 ;;
-;; Checked against `tcp.options` in test/tcp/options_kotoba_parity_test.clj.
+;; Checked against `tcp.options` in test/tcp/options_kotoba_parity_test.cljk.
 
 (ns tcp.options-wire-core
   (:export [u32-from-bytes u32-byte mss-from-bytes mss-hi mss-lo]))

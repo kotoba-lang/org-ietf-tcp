@@ -20,7 +20,7 @@
 ;; call, where the other argument is zero and the value is a length.
 ;;
 ;; Everything else is the .cljc source unchanged apart from type annotations.
-;; The parity test in test/tcp/seq_kotoba_parity_test.clj runs both.
+;; The parity test in test/tcp/seq_kotoba_parity_test.cljk runs both.
 
 (ns tcp.seq-core
   (:export [wrap add-seq sub-seq lt? leq? gt? geq? between? ordered? acceptable?

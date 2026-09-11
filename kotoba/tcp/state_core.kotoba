@@ -16,7 +16,7 @@
 ;; here would mean passing four more sequence numbers.
 ;;
 ;; Checked against `tcp.state/step` over every state x flag combination in
-;; test/tcp/state_kotoba_parity_test.clj.
+;; test/tcp/state_kotoba_parity_test.cljk.
 ;;
 ;; TARGETS: `wasm32-kotoba-v1` only, for now. Both native ISAs reject this
 ;; module, and not for anything it does -- kotoba-lang/amu#611. A module that

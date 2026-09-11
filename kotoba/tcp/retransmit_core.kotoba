@@ -9,7 +9,7 @@
 ;; Depends on `tcp.seq-core` for sequence comparison and for `segment-end`,
 ;; which `tcp.sack` and `tcp.retransmit` used to hold two private copies of.
 ;;
-;; Checked against `tcp.retransmit` in test/tcp/retransmit_kotoba_parity_test.clj.
+;; Checked against `tcp.retransmit` in test/tcp/retransmit_kotoba_parity_test.cljk.
 
 (ns tcp.retransmit-core
   (:require [tcp.seq-core :as s])
