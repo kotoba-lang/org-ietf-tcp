@@ -19,7 +19,7 @@
 ;; uniform sample of a 2^32 space never lands there.
 
 (ns tcp.reassemble-kotoba-parity-test
-  (:require [clojure.java.io :as io]
+  (:require [kotoba.io :as io]
             [kotoba.test :refer [deftest is]]
             [kotoba.compiler.core :as compiler]
             [kotoba.kir :as ir]
@@ -33,7 +33,7 @@
   (io/file (System/getProperty "user.dir") "kotoba" "tcp" "seq_core.kotoba"))
 
 (defn- source-available? []
-  (let [present? (and (.exists source-file) (.exists dep-file))]
+  (let [present? (and (io/exists? source-file) (io/exists? dep-file))]
     (is present? (str "kotoba objects not found: " source-file " / " dep-file))
     present?))
 

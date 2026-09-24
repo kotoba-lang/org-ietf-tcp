@@ -26,7 +26,7 @@
 ;; sample over a 2^32 space essentially never lands on any of them.
 
 (ns tcp.seq-kotoba-parity-test
-  (:require [clojure.java.io :as io]
+  (:require [kotoba.io :as io]
             [kotoba.test :refer [deftest is]]
             [kotoba.compiler.core :as compiler]
             [kotoba.kir :as ir]
@@ -43,7 +43,7 @@
   asserting nothing, and a reader counting green tests is told the two
   implementations agree when nobody asked them."
   []
-  (let [present? (.exists source-file)]
+  (let [present? (io/exists? source-file)]
     (is present? (str "kotoba object not found at " source-file))
     present?))
 
