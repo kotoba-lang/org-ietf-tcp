@@ -15,7 +15,7 @@
 ;; is part of the test rather than of either implementation.
 
 (ns tcp.state-kotoba-parity-test
-  (:require [clojure.java.io :as io]
+  (:require [kotoba.io :as io]
             [kotoba.test :refer [deftest is]]
             [kotoba.compiler.core :as compiler]
             [kotoba.kir :as ir]
@@ -32,7 +32,7 @@
   assertions reports green on a checkout without the object, which is a skip
   wearing a pass."
   []
-  (let [present? (and (.exists source-file) (.exists dep-file))]
+  (let [present? (and (io/exists? source-file) (io/exists? dep-file))]
     (is present? (str "kotoba objects not found: " source-file " / " dep-file))
     present?))
 

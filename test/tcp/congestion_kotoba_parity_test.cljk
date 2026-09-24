@@ -16,7 +16,7 @@
 ;; `if`. Every assertion here is over integers where that rewrite has to hold.
 
 (ns tcp.congestion-kotoba-parity-test
-  (:require [clojure.java.io :as io]
+  (:require [kotoba.io :as io]
             [kotoba.test :refer [deftest is]]
             [kotoba.compiler.core :as compiler]
             [kotoba.kir :as ir]
@@ -29,7 +29,7 @@
   "Fails rather than skips. A `when`-guard here reports green on a checkout
   without the object, which is a skip wearing a pass."
   []
-  (let [present? (.exists source-file)]
+  (let [present? (io/exists? source-file)]
     (is present? (str "kotoba object not found at " source-file))
     present?))
 
