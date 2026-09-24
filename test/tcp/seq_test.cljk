@@ -1,6 +1,6 @@
 (ns tcp.seq-test
   (:require [tcp.seq :as s]
-            [clojure.test :refer [deftest is testing]]))
+            [kotoba.test :refer [deftest is testing]]))
 
 (deftest comparison-is-modular-not-arithmetic
   (testing "the case a raw < gets wrong: after a wrap, small is newer than large"

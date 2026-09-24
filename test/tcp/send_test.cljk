@@ -5,7 +5,7 @@
             [tcp.retransmit :as rtx]
             [tcp.pacing :as pace]
             [tcp.pmtu :as pmtu]
-            [clojure.test :refer [deftest is testing]]))
+            [kotoba.test :refer [deftest is testing]]))
 
 (def mss 1160)  ; 1200 base MTU - 40 header
 

@@ -1,6 +1,6 @@
 (ns tcp.rto-test
   (:require [tcp.rto :as r]
-            [clojure.test :refer [deftest is testing]]))
+            [kotoba.test :refer [deftest is testing]]))
 
 (deftest before-any-sample-the-timeout-is-one-second
   (let [e (r/estimator)]

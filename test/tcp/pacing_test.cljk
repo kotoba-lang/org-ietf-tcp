@@ -1,7 +1,7 @@
 (ns tcp.pacing-test
   (:require [tcp.pacing :as p]
             [tcp.congestion :as cc]
-            [clojure.test :refer [deftest is testing]]))
+            [kotoba.test :refer [deftest is testing]]))
 
 (def mss 1000)
 (defn- snd [& {:as over}] (merge (p/sender {:mss mss}) over))

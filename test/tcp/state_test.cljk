@@ -1,7 +1,7 @@
 (ns tcp.state-test
   (:require [tcp.state :as t]
             [tcp.seq :as s]
-            [clojure.test :refer [deftest is testing]]))
+            [kotoba.test :refer [deftest is testing]]))
 
 (defn- c [& {:as over}] (merge (t/connection {:iss 1000}) over))
 (defn- sg [& {:keys [seq ack flags len] :or {len 0}}]

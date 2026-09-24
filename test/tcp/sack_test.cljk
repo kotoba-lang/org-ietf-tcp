@@ -2,7 +2,7 @@
   (:require [tcp.sack :as sack]
             [tcp.retransmit :as rtx]
             [tcp.reassemble :as ra]
-            [clojure.test :refer [deftest is testing]]))
+            [kotoba.test :refer [deftest is testing]]))
 
 ;; ── the option is small ──────────────────────────────────────────────────
 

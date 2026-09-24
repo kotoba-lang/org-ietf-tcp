@@ -1,6 +1,6 @@
 (ns tcp.pmtu-test
   (:require [tcp.pmtu :as m]
-            [clojure.test :refer [deftest is testing]]))
+            [kotoba.test :refer [deftest is testing]]))
 
 (defn- d [& {:as over}] (merge (m/discoverer {:link-mtu 1500}) over))
 

@@ -1,6 +1,6 @@
 (ns tcp.reassemble-test
   (:require [tcp.reassemble :as ra]
-            [clojure.test :refer [deftest is testing]]))
+            [kotoba.test :refer [deftest is testing]]))
 
 (defn- r [& {:as over}] (merge (ra/reassembler {:rcv-nxt 1000}) over))
 (defn- sg [n & bs] {:seq n :data (vec bs)})
