@@ -2,7 +2,7 @@
   (:require [tcp.retransmit :as rtx]
             [tcp.rto :as rto]
             [tcp.seq :as s]
-            [clojure.test :refer [deftest is testing]]))
+            [kotoba.test :refer [deftest is testing]]))
 
 (defn- q3 []
   (-> (rtx/queue)

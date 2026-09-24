@@ -1,6 +1,6 @@
 (ns tcp.congestion-test
   (:require [tcp.congestion :as cc]
-            [clojure.test :refer [deftest is testing]]))
+            [kotoba.test :refer [deftest is testing]]))
 
 (def mss 1000)
 (defn- c [& {:as over}] (merge (cc/controller {:mss mss}) over))

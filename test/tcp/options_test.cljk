@@ -1,7 +1,7 @@
 (ns tcp.options-test
   (:require [tcp.options :as o]
             [tcp.rto :as rto]
-            [clojure.test :refer [deftest is testing]]))
+            [kotoba.test :refer [deftest is testing]]))
 
 ;; ── parsing ──────────────────────────────────────────────────────────────
 
