@@ -13,7 +13,7 @@
 ;; two numbers deliberately differ.
 
 (ns tcp.send-kotoba-parity-test
-  (:require [clojure.java.io :as io]
+  (:require [kotoba.io :as io]
             [kotoba.test :refer [deftest is]]
             [kotoba.compiler.core :as compiler]
             [kotoba.kir :as ir]
@@ -33,9 +33,9 @@
 (defn- path [f] (io/file (System/getProperty "user.dir") "kotoba" "tcp" f))
 
 (defn- source-available? []
-  (let [present? (every? #(.exists (path %)) (vals files))]
+  (let [present? (every? #(io/exists? (path %)) (vals files))]
     (is present? (str "kotoba objects not found under kotoba/tcp: "
-                      (pr-str (remove #(.exists (path %)) (vals files)))))
+                      (pr-str (remove #(io/exists? (path %)) (vals files)))))
     present?))
 
 (def ^:private kir
