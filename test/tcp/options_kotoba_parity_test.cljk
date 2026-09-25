@@ -18,7 +18,7 @@
 ;; show.
 
 (ns tcp.options-kotoba-parity-test
-  (:require [clojure.java.io :as io]
+  (:require [kotoba.lang.error :as kerror] [kotoba.io :as io]
             [kotoba.test :refer [deftest is]]
             [kotoba.compiler.core :as compiler]
             [kotoba.kir :as ir]
@@ -30,7 +30,7 @@
   ["options_core.kotoba" "options_wire_core.kotoba" "seq_core.kotoba"])
 
 (defn- source-available? []
-  (let [missing (remove #(.exists (path %)) needed)]
+  (let [missing (remove #(io/exists? (path %)) needed)]
     (is (empty? missing) (str "kotoba objects not found: " (pr-str missing)))
     (empty? missing)))
 
@@ -154,7 +154,7 @@
     ;; a port cannot express them. If someone adds them, this fails and they
     ;; have to say so here.
     (doseq [f '[apply-scale advertise]]
-      (is (thrown? clojure.lang.ExceptionInfo (ir/execute @core-kir f [1 1]))
+      (is (thrown? kerror/ExceptionInfo (ir/execute @core-kir f [1 1]))
           (str f " must not exist as an object: RFC 7323 negotiates the shift, "
                "so it is a variable, and a variable shift count does not "
                "compile")))))
