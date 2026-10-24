@@ -14,19 +14,19 @@ concurrency:
 jobs:
   native-x86-kernel:
     runs-on: ubuntu-24.04
-    timeout-minutes: 60
+    timeout-minutes: 90
     env:
       AIUEOS_ORG_IETF_TCP_SOURCE_PATH: ${{ github.workspace }}/.native-inputs/org-ietf-tcp/kotoba
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: kotoba-lang/aiueos
-          ref: 6a171f48c4faeb2c1ef680a9ad7192388eb3fee6
+          ref: 22fc0e73fac857a71ea8cce8bc002ace7ce45e69
           persist-credentials: false
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: kotoba-lang/amu
-          ref: d96dcb2d4aa661254f7af0b4be281b25ef40a159
+          ref: eb0d319ed0da85293f6123f68a34c5fc215ec706
           path: .native-inputs/amu
           persist-credentials: false
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -57,6 +57,8 @@ jobs:
           sudo apt-get install -y --no-install-recommends qemu-system-x86 ovmf
       - name: Execute the DMA mechanism and require the valid-image control to fail
         run: python3 os/aiueos/scripts/check-native-dma-ci.py
+      - name: Execute complete live graphs, user entry, native media and desktop/input
+        run: python3 os/aiueos/scripts/check-native-live-ci.py
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: always()
         with:
@@ -71,4 +73,22 @@ jobs:
             ${{ runner.temp }}/qemu-*/*.stdout
             ${{ runner.temp }}/qemu-*/*.stderr
             ${{ runner.temp }}/native-dma-ci.json
+            ${{ runner.temp }}/native-live-ci.json
+            ${{ runner.temp }}/native-live-calls.json
+            ${{ runner.temp }}/build-*.stdout
+            ${{ runner.temp }}/build-*.stderr
+            ${{ runner.temp }}/value-*/build-state.json
+            ${{ runner.temp }}/user-entry/build-state.json
+            ${{ runner.temp }}/qemu-user-*/user-entry-qemu.json
+            ${{ runner.temp }}/qemu-user-*/registers.txt
+            ${{ runner.temp }}/qemu-*/command.json
+            ${{ runner.temp }}/qemu-*/qemu.log
+            ${{ runner.temp }}/qemu-*/serial.log
+            ${{ runner.temp }}/qemu-desktop/native-desktop-qemu.json
+            ${{ runner.temp }}/qemu-desktop/registers-native-desktop.txt
+            ${{ runner.temp }}/qemu-desktop/*.png
+            ${{ runner.temp }}/native-desktop/native-desktop.json
+            ${{ runner.temp }}/native-desktop/kernel/build-state.json
+            ${{ runner.temp }}/native-desktop/font/native-font.json
+            ${{ runner.temp }}/native-desktop/media/native-media.json
           if-no-files-found: warn
