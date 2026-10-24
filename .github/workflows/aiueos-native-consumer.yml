@@ -21,7 +21,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: kotoba-lang/aiueos
-          ref: fabc39c6d4ed2105b4189f821c94756a86f521f2
+          ref: 6a171f48c4faeb2c1ef680a9ad7192388eb3fee6
           persist-credentials: false
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
