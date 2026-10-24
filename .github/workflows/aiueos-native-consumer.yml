@@ -1,0 +1,74 @@
+name: aiueos-native-consumer
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/aiueos-native-consumer.yml']
+  pull_request:
+    paths: ['.github/workflows/aiueos-native-consumer.yml']
+permissions:
+  contents: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+jobs:
+  native-x86-kernel:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    env:
+      AIUEOS_ORG_IETF_TCP_SOURCE_PATH: ${{ github.workspace }}/.native-inputs/org-ietf-tcp/kotoba
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: kotoba-lang/aiueos
+          ref: 6a171f48c4faeb2c1ef680a9ad7192388eb3fee6
+          persist-credentials: false
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: kotoba-lang/amu
+          ref: d96dcb2d4aa661254f7af0b4be281b25ef40a159
+          path: .native-inputs/amu
+          persist-credentials: false
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: kotoba-lang/org-ietf-tcp
+          ref: 6532f6b13ddfa0404a050bab174cbbc5f036d335
+          path: .native-inputs/org-ietf-tcp
+          persist-credentials: false
+      - name: Fetch exact owner revisions and verify the pinned native product
+        run: python3 os/aiueos/scripts/stage-native-ci.py
+      - name: Reproduce the complete kernel graph and native EFI on x86
+        env:
+          AIUEOS_NATIVE_OUT: ${{ runner.temp }}/kernel
+        run: python3 os/aiueos/scripts/build-native-kernel.py .native-inputs/amu
+      - name: Reproduce the actual DMA snapshot probe and valid-image control
+        env:
+          AIUEOS_NATIVE_FUEL: '1000000'
+        run: |
+          set -euo pipefail
+          for kind in snapshot negative; do
+            AIUEOS_NATIVE_KERNEL_SOURCE="$GITHUB_WORKSPACE/os/aiueos/native/dma-$kind-probe.kotoba" \
+              AIUEOS_NATIVE_OUT="$RUNNER_TEMP/dma-$kind" \
+              python3 os/aiueos/scripts/build-native-kernel.py .native-inputs/amu
+          done
+      - name: Install the QEMU/OVMF observation tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends qemu-system-x86 ovmf
+      - name: Execute the DMA mechanism and require the valid-image control to fail
+        run: python3 os/aiueos/scripts/check-native-dma-ci.py
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: native-x86-kernel-receipts
+          path: |
+            ${{ runner.temp }}/kernel/build-state.json
+            ${{ runner.temp }}/kernel/*.stderr
+            ${{ runner.temp }}/dma-*/build-state.json
+            ${{ runner.temp }}/dma-*/*.stderr
+            ${{ runner.temp }}/qemu-*/entry-qemu.json
+            ${{ runner.temp }}/qemu-*/registers.txt
+            ${{ runner.temp }}/qemu-*/*.stdout
+            ${{ runner.temp }}/qemu-*/*.stderr
+            ${{ runner.temp }}/native-dma-ci.json
+          if-no-files-found: warn
