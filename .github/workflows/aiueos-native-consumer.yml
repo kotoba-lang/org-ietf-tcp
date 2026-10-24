@@ -21,12 +21,12 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: kotoba-lang/aiueos
-          ref: c4f28f37a8094aa4844efab1a4eac889ae88a086
+          ref: 22fc0e73fac857a71ea8cce8bc002ace7ce45e69
           persist-credentials: false
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: kotoba-lang/amu
-          ref: 7d996019a194df8498c157f560fd08e97e374623
+          ref: eb0d319ed0da85293f6123f68a34c5fc215ec706
           path: .native-inputs/amu
           persist-credentials: false
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
